@@ -129,3 +129,21 @@ it('reports a response-carrying transport failure as a redacted failed ping and 
         && str_contains($e->getMessage(), 'ping.peil.example')
         && ! str_contains($e->getMessage(), 'SECRET'));
 });
+
+it('refuses a non-https url, sends nothing and reports one redacted failed ping', function (string $url): void {
+    config(['peil.monitors.reaper' => $url]);
+    Http::fake();
+    Exceptions::fake();
+
+    finishedEvent(app(Schedule::class), 0);
+
+    Http::assertNothingSent();
+    Exceptions::assertReportedCount(1);
+    Exceptions::assertReported(fn (PeilPingFailed $e): bool => str_contains($e->getMessage(), 'not https')
+        && str_contains($e->getMessage(), 'ping.peil.example')
+        && ! str_contains($e->getMessage(), 'reaper99')
+        && ! str_contains($e->getMessage(), 'SECRET'));
+})->with([
+    'http' => 'http://ping.peil.example/p/reaper99?token=SECRET',
+    'HTTP uppercase' => 'HTTP://ping.peil.example/p/reaper99?token=SECRET',
+]);

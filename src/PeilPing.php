@@ -20,6 +20,12 @@ final readonly class PeilPing
             return;
         }
 
+        if (! $this->isHttps($url)) {
+            report(new PeilPingFailed($monitor, 'not https', $url));
+
+            return;
+        }
+
         try {
             $response = $this->http->withoutRedirecting()
                 ->timeout(self::TIMEOUT_SECONDS)
@@ -38,6 +44,14 @@ final readonly class PeilPing
         if (! $response->successful()) {
             report(new PeilPingFailed($monitor, 'HTTP '.$response->status(), $url));
         }
+    }
+
+    // The URL is a secret: never put it on the wire in plaintext.
+    private function isHttps(string $url): bool
+    {
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+
+        return is_string($scheme) && strtolower($scheme) === 'https';
     }
 
     // Laravel raises one ConnectionException for timeouts and refused connections alike.

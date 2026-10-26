@@ -20,7 +20,7 @@ Set the ping URL of your Peil queue monitor:
 PEIL_QUEUE_CANARY_URL=https://...
 ```
 
-Ping URLs must be `https`: pings do not follow redirects, so an `http://` URL against Peil's https-only edge fails with `HTTP 301` on every run.
+Ping URLs must be `https`. An `http://` URL is refused, not sent: nothing goes on the wire and a `PeilPingFailed` (`not https`) is reported instead. Pings also do not follow redirects.
 
 The package then schedules a queued job every five minutes on one server. When a queue worker runs it, the job sends a GET to that URL. With the variable unset or empty nothing is scheduled.
 
