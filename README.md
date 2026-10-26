@@ -57,6 +57,10 @@ Schedule::command('reaper:run')->hourly()->pingPeil('reaper');
 
 `pingPeil` pings only when the command succeeded, and does nothing when the monitor entry is unset or empty. The URL is read when the schedule is defined, so it works with `config:cache`.
 
+## Releases
+
+Every merge to `main` tags a release. The commit prefixes since the last tag decide the bump: `feat:` is a minor, `feat!:` (or any type with `!`, or a `BREAKING CHANGE:` footer) is a major, everything else is a patch. Packagist picks up the tag on its own.
+
 ## License
 
 MIT
