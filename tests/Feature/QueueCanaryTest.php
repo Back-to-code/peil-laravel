@@ -5,11 +5,14 @@ declare(strict_types=1);
 use BackToCode\PeilLaravel\PeilPingFailed;
 use BackToCode\PeilLaravel\QueueCanary;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\Response as PsrResponse;
 use Illuminate\Console\Scheduling\CallbackEvent;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\Request;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -153,4 +156,17 @@ it('reports a redacted PeilPingFailed from failed()', function (): void {
         && ! str_contains($e->getMessage(), 'abc123')
         && ! str_contains($e->getMessage(), 'SECRET')
         && $e->getPrevious() === null);
+});
+
+it('reports a response-carrying transport failure as a redacted failed ping and does not throw', function (): void {
+    config(['peil.queue_canary_url' => CANARY_URL]);
+    Http::fake(fn (): never => throw new RequestException(new Response(new PsrResponse(502))));
+    Exceptions::fake();
+
+    (new QueueCanary)->handle();
+
+    Exceptions::assertReportedCount(1);
+    Exceptions::assertReported(fn (PeilPingFailed $e): bool => str_contains($e->getMessage(), 'HTTP 502')
+        && str_contains($e->getMessage(), 'ping.peil.example')
+        && ! str_contains($e->getMessage(), 'SECRET'));
 });

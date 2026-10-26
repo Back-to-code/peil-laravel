@@ -20,6 +20,8 @@ Set the ping URL of your Peil queue monitor:
 PEIL_QUEUE_CANARY_URL=https://...
 ```
 
+Ping URLs must be `https`: pings do not follow redirects, so an `http://` URL against Peil's https-only edge fails with `HTTP 301` on every run.
+
 The package then schedules a queued job every five minutes on one server. When a queue worker runs it, the job sends a GET to that URL. With the variable unset or empty nothing is scheduled.
 
 `onOneServer()` needs a cache store with atomic locks (Redis, database, Memcached or DynamoDB) as the default cache store.

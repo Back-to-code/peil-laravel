@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 use BackToCode\PeilLaravel\PeilPingFailed;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\Response as PsrResponse;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\Request;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
 
@@ -112,4 +115,17 @@ it('does not follow a redirect and reports it as a failed ping', function (): vo
     Http::assertSent(fn (Request $request): bool => $request->url() === REAPER_URL);
     Exceptions::assertReportedCount(1);
     Exceptions::assertReported(fn (PeilPingFailed $e): bool => str_contains($e->getMessage(), 'HTTP 302'));
+});
+
+it('reports a response-carrying transport failure as a redacted failed ping and does not throw', function (): void {
+    config(['peil.monitors.reaper' => REAPER_URL]);
+    Http::fake(fn (): never => throw new RequestException(new Response(new PsrResponse(502))));
+    Exceptions::fake();
+
+    finishedEvent(app(Schedule::class), 0);
+
+    Exceptions::assertReportedCount(1);
+    Exceptions::assertReported(fn (PeilPingFailed $e): bool => str_contains($e->getMessage(), 'HTTP 502')
+        && str_contains($e->getMessage(), 'ping.peil.example')
+        && ! str_contains($e->getMessage(), 'SECRET'));
 });

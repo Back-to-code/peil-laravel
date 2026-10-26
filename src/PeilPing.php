@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BackToCode\PeilLaravel;
 
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 final class PeilPing
@@ -24,6 +25,10 @@ final class PeilPing
                 ->get($url);
         } catch (ConnectionException $e) {
             report(new PeilPingFailed($monitor, self::connectionFailure($e), $url));
+
+            return;
+        } catch (RequestException $e) {
+            report(new PeilPingFailed($monitor, 'HTTP '.$e->response->status(), $url));
 
             return;
         }
