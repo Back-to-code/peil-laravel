@@ -1,0 +1,4 @@
+# Sole code owner. Load-bearing for the "Codeowner gate" status (codeowner-gate.yml):
+# an author listed here passes the gate on their own PRs, everyone else needs this
+# owner's approval. Adding a handle here exempts that person's PRs from review.
+* @dmooibroek

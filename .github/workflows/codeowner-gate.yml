@@ -1,0 +1,33 @@
+name: Codeowner Gate
+
+# Reports on PR open/push and on review submission, so the required
+# "Codeowner gate" status flips green the moment a code owner approves.
+#
+# pull_request_target (not pull_request): the gate runs the base branch's
+# trusted workflow + action with a writable token — a PR can't edit it to forge
+# a pass. The action reads CODEOWNERS via the API and never checks out PR code.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: write
+
+concurrency:
+  group: codeowner-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  codeowner-gate:
+    # Distinct from the "Codeowner gate" commit-status context the ruleset
+    # requires — that status is the gate; this job just evaluates it.
+    name: Evaluate codeowner gate
+    # Public repo: the org's self-hosted runner group refuses public repositories.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: Back-to-code/actions/codeowner-gate@952a729002e959877ddcca98e5739c270f2d8925 # v2.2.6
