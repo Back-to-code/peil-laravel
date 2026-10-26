@@ -18,7 +18,8 @@ final class PeilPing
         }
 
         try {
-            $response = Http::timeout(self::TIMEOUT_SECONDS)
+            $response = Http::withoutRedirecting()
+                ->timeout(self::TIMEOUT_SECONDS)
                 ->connectTimeout(self::TIMEOUT_SECONDS)
                 ->get($url);
         } catch (ConnectionException $e) {

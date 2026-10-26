@@ -110,6 +110,25 @@ it('reports one redacted PeilPingFailed and does not throw', function (Closure $
     });
 })->with('ping failures');
 
+it('does not follow a redirect and reports it as a failed ping', function (): void {
+    config(['peil.queue_canary_url' => CANARY_URL]);
+    $options = [];
+    Http::fake(function (Request $request, array $given) use (&$options): PromiseInterface {
+        $options = $given;
+
+        return Http::response('', 302, ['Location' => 'https://evil.example/']);
+    });
+    Exceptions::fake();
+
+    (new QueueCanary)->handle();
+
+    expect($options['allow_redirects'])->toBeFalse();
+    Http::assertSentCount(1);
+    Http::assertSent(fn (Request $request): bool => $request->url() === CANARY_URL);
+    Exceptions::assertReportedCount(1);
+    Exceptions::assertReported(fn (PeilPingFailed $e): bool => str_contains($e->getMessage(), 'HTTP 302'));
+});
+
 it('runs once with no backoff', function (): void {
     $job = new QueueCanary;
 

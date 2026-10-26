@@ -81,3 +81,35 @@ it('reports one redacted PeilPingFailed and does not throw', function (Closure $
         'HTTP 503',
     ],
 ]);
+
+it('snapshots the monitor url when the event is defined', function (): void {
+    config(['peil.monitors.reaper' => REAPER_URL]);
+    Http::fake();
+
+    $event = app(Schedule::class)->call(fn (): null => null)->pingPeil('reaper');
+    config(['peil.monitors.reaper' => 'https://ping.peil.example/p/changed']);
+    $event->exitCode = 0;
+    $event->callAfterCallbacks(app());
+
+    Http::assertSentCount(1);
+    Http::assertSent(fn (Request $request): bool => $request->url() === REAPER_URL);
+});
+
+it('does not follow a redirect and reports it as a failed ping', function (): void {
+    config(['peil.monitors.reaper' => REAPER_URL]);
+    $options = [];
+    Http::fake(function (Request $request, array $given) use (&$options): PromiseInterface {
+        $options = $given;
+
+        return Http::response('', 302, ['Location' => 'https://evil.example/']);
+    });
+    Exceptions::fake();
+
+    finishedEvent(app(Schedule::class), 0);
+
+    expect($options['allow_redirects'])->toBeFalse();
+    Http::assertSentCount(1);
+    Http::assertSent(fn (Request $request): bool => $request->url() === REAPER_URL);
+    Exceptions::assertReportedCount(1);
+    Exceptions::assertReported(fn (PeilPingFailed $e): bool => str_contains($e->getMessage(), 'HTTP 302'));
+});
