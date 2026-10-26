@@ -59,7 +59,7 @@ Schedule::command('reaper:run')->hourly()->pingPeil('reaper');
 
 ## Releases
 
-Every merge to `main` tags a release. The commit prefixes since the last tag decide the bump: `feat:` is a minor, `feat!:` (or any type with `!`, or a `BREAKING CHANGE:` footer) is a major, everything else is a patch. Packagist picks up the tag on its own.
+Every merge to `main` tags a release. The commit prefixes since the last tag decide the bump: `feat:` is a minor, `feat!:` (or any type with `!`, or a `BREAKING CHANGE:` footer) is a major, everything else is a patch. Pull requests merge with a merge commit, not a squash, so those prefixes reach `main` as written. Packagist picks up the tag on its own.
 
 ## License
 
