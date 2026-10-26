@@ -5,26 +5,28 @@ declare(strict_types=1);
 namespace BackToCode\PeilLaravel;
 
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Http;
 
-final class PeilPing
+final readonly class PeilPing
 {
     private const int TIMEOUT_SECONDS = 5;
 
-    public static function send(string $monitor, string $url): void
+    public function __construct(private Factory $http) {}
+
+    public function send(string $monitor, string $url): void
     {
         if ($url === '') {
             return;
         }
 
         try {
-            $response = Http::withoutRedirecting()
+            $response = $this->http->withoutRedirecting()
                 ->timeout(self::TIMEOUT_SECONDS)
                 ->connectTimeout(self::TIMEOUT_SECONDS)
                 ->get($url);
         } catch (ConnectionException $e) {
-            report(new PeilPingFailed($monitor, self::connectionFailure($e), $url));
+            report(new PeilPingFailed($monitor, $this->connectionFailure($e), $url));
 
             return;
         } catch (RequestException $e) {
@@ -39,7 +41,7 @@ final class PeilPing
     }
 
     // Laravel raises one ConnectionException for timeouts and refused connections alike.
-    private static function connectionFailure(ConnectionException $e): string
+    private function connectionFailure(ConnectionException $e): string
     {
         return str_contains($e->getMessage(), 'cURL error 28') ? 'timeout' : 'connection error';
     }

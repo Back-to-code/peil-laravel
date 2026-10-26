@@ -21,9 +21,9 @@ final class QueueCanary implements ShouldQueue
     public int $backoff = 0;
 
     // The URL is read from config on each run, never held on the job: it would serialize into the queue payload.
-    public function handle(): void
+    public function handle(PeilPing $ping): void
     {
-        PeilPing::send('queue canary', self::url());
+        $ping->send('queue canary', self::url());
     }
 
     public function failed(Throwable $e): void

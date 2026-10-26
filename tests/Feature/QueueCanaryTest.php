@@ -74,7 +74,7 @@ it('GETs the configured url when the job runs', function (): void {
     config(['peil.queue_canary_url' => CANARY_URL]);
     Http::fake();
 
-    (new QueueCanary)->handle();
+    app()->call([new QueueCanary, 'handle']);
 
     Http::assertSentCount(1);
     Http::assertSent(fn (Request $request): bool => $request->method() === 'GET' && $request->url() === CANARY_URL);
@@ -89,7 +89,7 @@ it('bounds the ping with a 5 s timeout and connect timeout', function (): void {
         return Http::response('ok');
     });
 
-    (new QueueCanary)->handle();
+    app()->call([new QueueCanary, 'handle']);
 
     expect($options['timeout'])->toBe(5)
         ->and($options['connect_timeout'])->toBe(5);
@@ -100,7 +100,7 @@ it('reports one redacted PeilPingFailed and does not throw', function (Closure $
     $fake();
     Exceptions::fake();
 
-    (new QueueCanary)->handle();
+    app()->call([new QueueCanary, 'handle']);
 
     Exceptions::assertReportedCount(1);
     Exceptions::assertReported(function (PeilPingFailed $e) use ($failure): bool {
@@ -123,7 +123,7 @@ it('does not follow a redirect and reports it as a failed ping', function (): vo
     });
     Exceptions::fake();
 
-    (new QueueCanary)->handle();
+    app()->call([new QueueCanary, 'handle']);
 
     expect($options['allow_redirects'])->toBeFalse();
     Http::assertSentCount(1);
@@ -163,7 +163,7 @@ it('reports a response-carrying transport failure as a redacted failed ping and 
     Http::fake(fn (): never => throw new RequestException(new Response(new PsrResponse(502))));
     Exceptions::fake();
 
-    (new QueueCanary)->handle();
+    app()->call([new QueueCanary, 'handle']);
 
     Exceptions::assertReportedCount(1);
     Exceptions::assertReported(fn (PeilPingFailed $e): bool => str_contains($e->getMessage(), 'HTTP 502')

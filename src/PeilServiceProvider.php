@@ -25,8 +25,8 @@ final class PeilServiceProvider extends ServiceProvider
             /** @var Event $this */
             $url = (string) config("peil.monitors.{$monitor}", '');
 
-            return $url === '' ? $this : $this->onSuccess(function () use ($monitor, $url): void {
-                PeilPing::send($monitor, $url);
+            return $url === '' ? $this : $this->onSuccess(function (PeilPing $ping) use ($monitor, $url): void {
+                $ping->send($monitor, $url);
             });
         });
 
