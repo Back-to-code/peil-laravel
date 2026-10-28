@@ -17,15 +17,18 @@ permissions:
   pull-requests: read
   statuses: write
 
-concurrency:
-  group: codeowner-gate-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
 jobs:
   codeowner-gate:
     # Distinct from the "Codeowner gate" commit-status context the ruleset
     # requires — that status is the gate; this job just evaluates it.
     name: Evaluate codeowner gate
+    # COMMENTED reviews can't change the verdict, so skip them. Concurrency sits at
+    # job level so a skipped run never joins the group, and is keyed per event so a
+    # review run can't cancel the push run (its check would stay cancelled).
+    if: github.event_name == 'pull_request_target' || github.event.review.state != 'commented'
+    concurrency:
+      group: codeowner-gate-${{ github.event.pull_request.number }}-${{ github.event_name }}
+      cancel-in-progress: true
     # Public repo: the org's self-hosted runner group refuses public repositories.
     runs-on: ubuntu-latest
     timeout-minutes: 5
