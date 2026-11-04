@@ -1,0 +1,35 @@
+version: 2
+
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # Library: only touch the constraint in composer.json when the new version
+    # no longer satisfies it, so supported ranges (e.g. ^12.0|^13.0) are never
+    # narrowed by a routine bump.
+    versioning-strategy: increase-if-necessary
+    groups:
+      # illuminate/* components are released together and must move in lockstep.
+      illuminate:
+        patterns:
+          - "illuminate/*"
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      # Actions are SHA-pinned, so every bump rewrites a workflow file. Batching
+      # them keeps that churn to one PR per week instead of one per action.
+      actions:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
+    labels:
+      - ci
