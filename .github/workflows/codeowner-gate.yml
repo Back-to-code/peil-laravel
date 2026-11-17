@@ -33,4 +33,4 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: Back-to-code/actions/codeowner-gate@4e2865fd970f5a0c8e5e687142b78c8691987577 # v2.2.9
+      - uses: Back-to-code/actions/codeowner-gate@26c39f2eb6399a91240caef619e85c88a8955216 # v2.2.10
